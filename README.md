@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Armario azul del taller</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500&family=Barlow+Condensed:wght@500;600&display=swap">
+<style>
+:root{--bg:#e6eaee;--paper:#f5f7f8;--ink:#1d252b;--steel:#5b6770;--line:#c7ced4;--acc:#1b6fb5;--plate1:#e3e8ec;--plate2:#cdd4da;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#222b31;--ink:#e9eef1;--steel:#9eaab3;--line:#38444c;--acc:#5aa9e6;--plate1:#33404a;--plate2:#28333b}}
+:root[data-theme="dark"]{--paper:#222b31;--ink:#e9eef1;--steel:#9eaab3;--line:#38444c;--acc:#5aa9e6;--plate1:#33404a;--plate2:#28333b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0;background:var(--bg);overscroll-behavior:none}
+body{font:400 15px/1.35 Barlow,"Arial Narrow",system-ui,sans-serif;color:var(--ink)}
+#app{position:relative;height:100%;overflow:hidden;background:linear-gradient(180deg,#eef2f5,#d5dce3)}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+h1,h2{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600}
+header{position:absolute;top:10px;left:14px;color:#1d252b;pointer-events:none}
+header h1{margin:0;font-size:22px;line-height:1}
+header p{margin:3px 0 0;font-size:13px;color:#4a555d}
+#find{position:absolute;top:58px;left:12px;right:12px;z-index:5}
+#q{width:100%;box-sizing:border-box;padding:11px 14px;font:inherit;font-size:16px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:3px;box-shadow:0 2px 10px #1d252b22}
+#q::placeholder{color:var(--steel)}
+#res{position:absolute;left:0;right:0;top:100%;margin:4px 0 0;padding:0;list-style:none;max-height:42vh;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:3px;box-shadow:0 8px 24px #1d252b33}
+#res button{display:block;width:100%;text-align:left;padding:9px 14px;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;color:var(--ink);cursor:pointer}
+#res li:last-child button{border-bottom:0}
+#res b{font:600 18px "Barlow Condensed",sans-serif}
+#res span{display:block;font-size:13px;color:var(--steel)}
+#res .none{padding:12px 14px;color:var(--steel);font-size:14px}
+#map{position:absolute;right:12px;top:118px;display:grid;grid-template-columns:repeat(2,26px);gap:3px;padding:4px;background:var(--paper);border:2px solid var(--steel);border-radius:2px}
+#map button{height:20px;padding:0;border:0;border-radius:1px;cursor:pointer;opacity:.78}
+#map button.d{height:12px;margin-top:2px}
+#map button[aria-current="true"]{opacity:1;outline:2px solid var(--ink);outline-offset:1px}
+#sheet{position:absolute;left:8px;right:8px;bottom:8px;max-height:44%;overflow:auto;background:var(--paper);border:1px solid var(--line);border-left:7px solid var(--lv,#1f64b5);border-radius:3px;box-shadow:0 6px 22px #1d252b30}
+#sheet>button{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px 8px;background:none;border:0;color:var(--ink);text-align:left;cursor:pointer}
+#sheet h2{margin:0;font-size:24px;line-height:1.05}
+#sheet>button i{font-style:normal;color:var(--steel);font-size:13px;white-space:nowrap}
+.body{padding:0 14px 14px}
+.body[hidden]{display:none}
+.tools{margin:0 0 10px;padding:0;list-style:none}
+.tools li{padding:5px 0;border-bottom:1px solid var(--line)}
+.plate{display:inline-block;max-width:100%;box-sizing:border-box;margin:0;padding:6px 11px;font:500 18px/1.15 "Barlow Condensed",sans-serif;letter-spacing:.02em;color:var(--ink);background:linear-gradient(var(--plate1),var(--plate2));border:1px solid var(--line);border-radius:2px;box-shadow:inset 0 1px 2px #1d252b33}
+.meta{margin:8px 0 0;color:var(--steel);font-size:14px}
+.sw{display:inline-block;width:11px;height:11px;margin-right:6px;border-radius:50%;border:1px solid #1d252b44;vertical-align:-1px}
+.clear{margin-top:10px;padding:7px 12px;font:inherit;color:var(--ink);background:none;border:1px solid var(--steel);border-radius:3px;cursor:pointer}
+.hint{position:absolute;left:0;right:0;bottom:calc(46% + 12px);text-align:center;font-size:13px;color:#4a555d;pointer-events:none}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+@media (min-width:760px){
+ header{left:20px;top:16px}
+ #find{top:14px;left:auto;right:16px;width:360px}
+ #map{top:80px;right:16px}
+ #sheet{left:16px;right:auto;bottom:16px;width:380px;max-height:60%}
+ .hint{bottom:18px}
+}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/"}}</script>
+</head>
+<body>
+<div id="app">
+ <canvas id="c" aria-label="Vista 3D del armario azul"></canvas>
+ <header><h1>Armario azul del taller</h1><p>2 columnas, 4 secciones y 2 puertas.</p></header>
+ <div id="find"><input id="q" type="search" placeholder="Buscar herramienta o etiqueta" autocomplete="off" spellcheck="false" aria-label="Buscar herramienta"><ul id="res" hidden></ul></div>
+ <nav id="map" aria-label="Secciones del armario"></nav>
+ <p class="hint">Arrastra para girar. Toca una sección o busca una herramienta.</p>
+ <section id="sheet" aria-live="polite"></section>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+
+/* ---------- Datos (leídos de las fotos; la sección 1 es la de arriba, como las etiquetas amarillas) ---------- */
+const LV={
+ L1:['Sección 1, izquierda',['Bandeja azul de boquillas ER','Cinta amarilla','Pinzas colgadas'],'Boquillas','#2f5fad'],
+ R1:['Sección 1, derecha',['Bandeja azul de portaboquillas','Portaherramientas BT40','Fresa de careo','Fresa de punta'],'Porta boquillas','#2f5fad'],
+ L2:['Sección 2, izquierda',['WD-40','Linterna','Candado','Cajas azules: brocas y rimas, contadores verticales, insertos y llave Torx','Cajas rojas y naranjas'],'Brocas y rimas, Contadores verticales, Insertos y llave Torx','#d62828'],
+ R2:['Sección 2, derecha',['Portaherramientas negro y gris','Pieza hexagonal amarilla','Caja de avellanadores','Estuche rojo','Juego de clamps'],'Avellanadores, Juego de clamps','#d62828'],
+ L3:['Sección 3, izquierda',['Piedra rotativa y flap','Escuadra','Flexómetro y brocas','Mangueras y herramientas','Juego de llaves allen y métricas','Limas y limas de joyero'],'Seis cajas azules etiquetadas','#e9c11a'],
+ R3:['Sección 3, derecha',['Manguera amarilla','Mordazas blandas','Cepillo','Martillo','Llaves de gancho','Maneral en T'],'Sin etiqueta','#e9c11a'],
+ L4:['Sección 4, izquierda',['Trapo blanco','Caja amarilla y naranja','Piezas negras','Dispositivos'],'Dispositivos','#e8a21a'],
+ R4:['Sección 4, derecha',['Caja de muestras','Caja amarilla de EPP','Discos blancos de pulir','Barras de acero','Paralelas'],'Muestras, EPP, Paralelas','#2f5fad'],
+ PI:['Puerta izquierda',['Calendario 2026','Micrómetros y clamps colgados'],'Sin etiqueta','#1f64b5'],
+ PD:['Puerta derecha',['Anuncio de ferretería','Tabla de roscas','Calendario de taco','Llaves de mano','Placa con tornillos'],'Llaves de mano','#1f64b5']
+};
+const TOOLS=[
+ ['Boquillas ER','Boquillas','L1','azul','#2f5fad'],['Cinta amarilla','Sin etiqueta','L1','amarillo','#e9c11a'],['Pinzas','Sin etiqueta','L1','plateado','#cbd0d6'],
+ ['Portaboquillas','Porta boquillas','R1','azul','#2f5fad'],['Portaherramientas BT40','Sin etiqueta','R1','plateado','#cbd0d6'],['Fresa de careo','Sin etiqueta','R1','plateado','#cbd0d6'],['Fresa de punta','Sin etiqueta','R1','plateado','#cbd0d6'],
+ ['WD-40','Sin etiqueta','L2','azul','#2c5fa8'],['Linterna','Sin etiqueta','L2','negro','#20252a'],['Candado','Sin etiqueta','L2','dorado','#b8963a'],
+ ['Brocas y rimas','Brocas y rimas','L2','azul','#2f5fad'],['Contadores verticales','Contadores verticales','L2','azul','#2f5fad'],['Insertos y llave Torx','Insertos y llave Torx','L2','azul','#2f5fad'],
+ ['Portaherramientas negro y gris','Sin etiqueta','R2','negro','#20252a'],['Avellanadores','Avellanadores','R2','azul','#2f5fad'],['Estuche rojo','Sin etiqueta','R2','rojo','#d62828'],['Juego de clamps','Juego de clamps','R2','blanco','#f0f0ec'],
+ ['Piedra rotativa y flap','Piedra rotativa y flap','L3','azul','#2f5fad'],['Escuadra','Escuadra','L3','azul','#2f5fad'],['Flexómetro y brocas','Flexómetro y brocas','L3','azul','#2f5fad'],
+ ['Mangueras y herramientas','Mangueras y herramientas','L3','azul','#2f5fad'],['Juego de llaves allen y métricas','Juego de llaves allen y métricas','L3','azul','#2f5fad'],['Limas y limas de joyero','Limas y limas de joyero','L3','azul','#2f5fad'],
+ ['Manguera amarilla','Sin etiqueta','R3','amarillo','#f2c200'],['Mordazas blandas','Sin etiqueta','R3','plateado','#cbd0d6'],['Martillo','Sin etiqueta','R3','amarillo','#f2c200'],['Llaves de gancho','Sin etiqueta','R3','plateado','#cbd0d6'],['Maneral en T','Sin etiqueta','R3','plateado','#cbd0d6'],
+ ['Trapo','Sin etiqueta','L4','blanco','#f0f0ec'],['Caja amarilla y naranja','Sin etiqueta','L4','amarillo','#e8a21a'],['Dispositivos','Dispositivos','L4','negro','#20252a'],
+ ['Muestras','Muestras','R4','azul','#2f5fad'],['EPP','EPP','R4','amarillo','#e9c11a'],['Discos blancos de pulir','Sin etiqueta','R4','blanco','#f0f0ec'],['Paralelas','Paralelas','R4','plateado','#cbd0d6'],['Barras de acero','Sin etiqueta','R4','plateado','#cbd0d6'],
+ ['Calendario 2026','Sin etiqueta','PI','blanco','#f0f0ec'],['Micrómetros y clamps colgados','Sin etiqueta','PI','plateado','#cbd0d6'],
+ ['Tabla de roscas','Sin etiqueta','PD','blanco','#f0f0ec'],['Calendario de taco','Sin etiqueta','PD','blanco','#f0f0ec'],['Llaves de mano','Llaves de mano','PD','negro','#20252a']
+].map(([title,tag,lv,colorLabel,hex])=>({title,tag,lv,colorLabel,hex,loc:LV[lv][0]}));
+
+/* Medidas estimadas (m): 1.2 ancho, 1.7 alto, 0.45 fondo */
+const W=1.2,H=1.7,D=0.45,T=0.02,YB={1:1.285,2:0.86,3:0.435,4:0.02};
+const DOOR={PI:{x:-0.6,y:0.95,z:0.525,o:[1,0.1,0.3],f:[0.12,1,0.62]},PD:{x:0.6,y:0.95,z:0.525,o:[-1,0.1,0.3],f:[0.12,1,0.62]}};
+const pos=id=>DOOR[id]||{x:id[0]==='L'?-0.3:0.3,y:YB[id[1]]+0.19,z:0,o:[id[0]==='L'?0.18:-0.18,0.35,0.85],f:[0.56,0.38,0.41]};
+
+/* ---------- Escena ---------- */
+const canvas=document.getElementById('c'),app=document.getElementById('app');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const scene=new THREE.Scene();scene.background=new THREE.Color(15133422);scene.fog=new THREE.Fog(15133422,8,18);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+const cam=new THREE.PerspectiveCamera(38,1,0.1,100);cam.position.set(0,1.15,2.7);
+const ctl=new OrbitControls(cam,canvas);
+Object.assign(ctl,{enableDamping:true,dampingFactor:0.08,minDistance:0.9,maxDistance:5,minPolarAngle:0.2,maxPolarAngle:Math.PI*0.48});
+ctl.target.set(0,0.85,0);ctl.update();
+scene.add(new THREE.AmbientLight(16777215,0.6));
+const sun=new THREE.DirectionalLight(16777215,1.1);sun.position.set(2,3.5,2.6);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{near:0.5,far:10,left:-2.5,right:2.5,top:2.5,bottom:-1.5});sun.shadow.bias=-0.0002;scene.add(sun);
+const fill=new THREE.DirectionalLight(14213872,0.35);fill.position.set(-2,2.5,-1);scene.add(fill);
+scene.add(new THREE.HemisphereLight(15660023,2792373,0.25));
+
+const mat=(c,r,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+const body=mat(0xdadcd5,0.6,0.1),shelfM=mat(0xe3e5df,0.65,0.05),doorM=mat(0x1f64b5,0.45,0.35),
+ silver=mat(0xcbd0d6,0.25,0.65),gray=mat(0x8b8f94,0.5,0.4),black=mat(0x20252a,0.6,0.1),blue=mat(0x2f5fad,0.6),wd=mat(0x2c5fa8,0.5),
+ red=mat(0xd62828,0.45),orange=mat(0xe8742a,0.55),yellow=mat(0xe9c11a,0.5),hose=mat(0xf2c200,0.5),boxY=mat(0xe8a21a,0.6),
+ white=mat(0xf0f0ec,0.8),gold=mat(0xb8963a,0.35,0.7),green=mat(0x2f9e44,0.5),tan=mat(0xc9a46a,0.7),handleM=mat(0x666a6e,0.3,0.7);
+const B=(w,h,d)=>new THREE.BoxGeometry(w,h,d),C=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s);
+function add(parent,geo,m,x,y,z,rot){const s=new THREE.Mesh(geo,m);s.position.set(x,y,z);if(rot)Object.assign(s.rotation,rot);s.castShadow=s.receiveShadow=true;parent.add(s);return s}
+
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,20),mat(0x1b8fd6,0.7,0.05));floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
+
+/* Cuerpo: 2 columnas, 3 repisas por lado, divisor central */
+const cab=new THREE.Group();scene.add(cab);
+add(cab,B(W,H,T),body,0,H/2,-D/2);add(cab,B(W,T,D),body,0,H-T/2,0);add(cab,B(W,T,D),body,0,T/2,0);
+add(cab,B(T,H,D),body,-W/2+T/2,H/2,0);add(cab,B(T,H,D),body,W/2-T/2,H/2,0);add(cab,B(T,H-T*2,D),body,0,H/2,0);
+[0.425,0.85,1.275].forEach(y=>{add(cab,B(W/2-T,T,D-0.02),shelfM,-W/4,y,0);add(cab,B(W/2-T,T,D-0.02),shelfM,W/4,y,0)});
+
+/* Puertas azules abiertas a 90°, con lo que lleva cada una por dentro */
+const hinges={};
+[['PI',-1,-1],['PD',1,1]].forEach(([id,s,r])=>{
+ const h=new THREE.Group();h.position.set(s*W/2,H/2,D/2);h.rotation.y=r*Math.PI/2;cab.add(h);hinges[id]=h;
+ const d=add(h,B(W/2,H,T),doorM,-s*W/4,0,0);add(d,B(0.02,0.18,0.02),handleM,-s*(W/4-0.08),0,0.03);
+ if(id==='PI'){add(d,B(0.34,0.46,0.004),white,0,0.25,-0.012);
+  for(let i=0;i<3;i++)add(d,C(0.008,0.008,0.07,8),silver,-0.1+i*0.1,0.5-i*0.04,-0.045,{x:Math.PI/2})}
+ else{add(d,B(0.34,0.5,0.004),orange,0,0.3,-0.012);add(d,B(0.2,0.28,0.003),white,-0.1,0.45,-0.017);
+  add(d,B(0.1,0.12,0.03),white,0.05,0.2,-0.03);add(d,B(0.2,0.07,0.02),black,0,-0.05,-0.02);add(d,B(0.1,0.04,0.01),white,0,-0.15,-0.015)}
+});
+
+/* Compartimentos: grupo con caja de selección invisible */
+const lvGroups={},pick=[];
+Object.keys(LV).filter(id=>!DOOR[id]).forEach(id=>{
+ const p=pos(id),g=new THREE.Group();g.position.set(p.x,YB[id[1]],0);cab.add(g);lvGroups[id]=g;
+ const hit=new THREE.Mesh(B(0.56,0.38,D-0.04),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));hit.position.y=0.19;g.add(hit);
+});
+const L=id=>lvGroups[id];
+{const g=L('L1');add(g,B(0.52,0.04,0.2),blue,0,0.02,0);for(let r=0;r<3;r++)for(let i=0;i<8;i++)add(g,C(0.014,0.014,0.035,10),silver,-0.21+i*0.06,0.058,-0.06+r*0.06);add(g,C(0.045,0.045,0.05,16),yellow,-0.2,0.065,0.13)}
+{const g=L('R1');add(g,B(0.56,0.04,0.2),blue,0,0.02,0.02);for(let i=0;i<6;i++)add(g,C(0.022,0.017,0.15,12),silver,-0.22+i*0.088,0.115,0.0);add(g,C(0.06,0.06,0.05,20),black,0.2,0.065,-0.1)}
+{const g=L('L2');for(let i=0;i<3;i++)add(g,B(0.17,0.07,0.1),blue,-0.19+i*0.19,0.035,0.1);add(g,B(0.22,0.06,0.08),red,-0.17,0.03,-0.13);add(g,B(0.22,0.06,0.08),orange,0.1,0.03,-0.13);
+ add(g,C(0.03,0.03,0.14,14),wd,-0.24,0.07,-0.02);add(g,C(0.018,0.018,0.22,10),black,-0.1,0.11,-0.02);add(g,B(0.05,0.04,0.02),gold,0,0.02,0.19);add(g,B(0.04,0.03,0.03),green,-0.27,0.015,0.17)}
+{const g=L('R2');add(g,C(0.05,0.05,0.2,18),black,-0.17,0.1,-0.02);add(g,C(0.045,0.045,0.22,18),gray,-0.08,0.11,-0.02);add(g,C(0.05,0.05,0.035,6),yellow,0.06,0.075,-0.1,{x:Math.PI/2});
+ add(g,B(0.2,0.07,0.1),blue,0.1,0.035,0.1);add(g,B(0.22,0.06,0.14),red,0.17,0.03,-0.08)}
+{const g=L('L3');for(let i=0;i<4;i++){add(g,B(0.13,0.06,0.1),i%2?black:blue,-0.22+i*0.15,0.03,0.08);add(g,B(0.13,0.05,0.1),black,-0.22+i*0.15,0.025,-0.06)}
+ add(g,B(0.1,0.07,0.08),yellow,-0.24,0.035,-0.15);add(g,C(0.01,0.01,0.3,8),silver,0.15,0.09,-0.12,{x:Math.PI/2})}
+{const g=L('R3');add(g,C(0.035,0.035,0.2,14),hose,-0.1,0.1,-0.02);for(let i=0;i<3;i++)add(g,B(0.05,0.05,0.06),silver,-0.25+i*0.045,0.025,0.12);
+ add(g,B(0.05,0.012,0.12),tan,-0.05,0.01,0.12,{y:0.5});add(g,B(0.1,0.04,0.04),hose,0.1,0.02,0.15);
+ for(let i=0;i<3;i++)add(g,B(0.3,0.008,0.02),silver,0.12,0.01,0.03+i*0.05,{y:0.2+i*0.15});add(g,C(0.008,0.008,0.2,8),silver,0.15,0.02,-0.12,{z:Math.PI/2})}
+{const g=L('L4');add(g,B(0.2,0.15,0.2),white,-0.17,0.075,0);add(g,B(0.16,0.14,0.14),boxY,0,0.07,0);add(g,B(0.12,0.1,0.12),black,0.17,0.05,-0.05);add(g,B(0.1,0.05,0.1),black,0.15,0.025,0.1)}
+{const g=L('R4');add(g,B(0.18,0.1,0.1),blue,-0.1,0.05,-0.05);add(g,B(0.2,0.06,0.15),yellow,0.12,0.03,-0.1);add(g,C(0.06,0.06,0.04,20),white,0.17,0.02,0.08);add(g,C(0.055,0.055,0.04,20),white,0.17,0.06,0.08);
+ add(g,B(0.1,0.06,0.08),gray,-0.15,0.03,0.1);for(let i=0;i<3;i++)add(g,C(0.009,0.009,0.5,8),silver,0,0.012,0.14-i*0.03,{z:Math.PI/2})}
+Object.entries(lvGroups).forEach(([id,g])=>g.traverse(o=>{if(o.isMesh){o.userData.lv=id;pick.push(o)}}));
+Object.entries(hinges).forEach(([id,g])=>g.traverse(o=>{if(o.isMesh){o.userData.lv=id;pick.push(o)}}));
+
+/* Marca del nivel seleccionado y flecha de búsqueda */
+const frame=new THREE.Group(),fgeo=B(0.56,0.38,0.41);
+const fillM=new THREE.MeshBasicMaterial({color:0x2f8fd6,transparent:true,opacity:0.06,depthWrite:false});
+frame.add(new THREE.Mesh(fgeo,fillM),new THREE.LineSegments(new THREE.EdgesGeometry(fgeo),new THREE.LineBasicMaterial({color:0x2f8fd6})));
+scene.add(frame);
+const arrowM=new THREE.MeshStandardMaterial({color:3144570,emissive:3144570,emissiveIntensity:0.9,roughness:0.4,metalness:0.2});
+const arrow=new THREE.Group();
+const shaft=new THREE.Mesh(C(0.018,0.018,0.28,12),arrowM);shaft.position.y=0.22;
+const tip=new THREE.Mesh(new THREE.ConeGeometry(0.09,0.18,16),arrowM);tip.rotation.x=Math.PI;
+const ring=new THREE.Mesh(new THREE.TorusGeometry(0.11,0.015,8,20),new THREE.MeshStandardMaterial({color:3144570,emissive:3144570,emissiveIntensity:1.2,transparent:true,opacity:0.9}));
+ring.position.y=0.35;ring.rotation.x=Math.PI/2;arrow.add(shaft,tip,ring);arrow.scale.setScalar(0.6);arrow.visible=false;scene.add(arrow);
+let arrowBase=0,pulseUntil=0;
+const mark=id=>{const p=pos(id);frame.position.set(p.x,p.y,p.z);frame.scale.set(p.f[0]/0.56,p.f[1]/0.38,p.f[2]/0.41)};
+
+function flyTo(id){
+ const p=pos(id),tgt=new THREE.Vector3(p.x,p.y,p.z),to=tgt.clone().add(new THREE.Vector3(...p.o));
+ const c0=cam.position.clone(),t0=ctl.target.clone(),dur=reduce?1:950,s=performance.now();
+ (function step(now){const e=Math.min((now-s)/dur,1),k=e<0.5?4*e*e*e:1-Math.pow(-2*e+2,3)/2;
+  ctl.target.lerpVectors(t0,tgt,k);cam.position.lerpVectors(c0,to,k);ctl.update();if(e<1)requestAnimationFrame(step)})(s);
+}
+
+/* ---------- Interfaz ---------- */
+const $=s=>document.querySelector(s),q=$('#q'),res=$('#res'),sheet=$('#sheet'),mapEl=$('#map');
+let cur='L1',found=null,open=true;
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+['L1','R1','L2','R2','L3','R3','L4','R4','PI','PD'].forEach(id=>{
+ const b=document.createElement('button');b.dataset.id=id;b.style.background=LV[id][3];b.title=b.ariaLabel=LV[id][0];if(DOOR[id])b.className='d';
+ b.onclick=()=>select(id);mapEl.append(b)});
+
+function render(){
+ const [title,items,tags,color]=LV[cur];sheet.style.setProperty('--lv',found?found.hex:color);
+ mapEl.querySelectorAll('button').forEach(b=>b.ariaCurrent=b.dataset.id===cur);
+ const inner=found
+  ?`<p class="plate">Etiqueta: ${esc(found.tag)}</p>
+    <p class="meta"><span class="sw" style="background:${found.hex}"></span>${esc(found.loc)}. Color ${esc(found.colorLabel)}.</p>
+    <p class="meta">En ese lugar también hay: ${esc(items.join(', '))}.</p>
+    <button class="clear" id="clr">Quitar flecha</button>`
+  :`<ul class="tools">${items.map(t=>`<li>${esc(t)}</li>`).join('')}</ul><p class="plate">Etiquetas: ${esc(tags)}</p>`;
+ sheet.innerHTML=`<button id="tg" aria-expanded="${open}"><h2>${esc(found?found.title:title)}</h2><i>${open?'Ocultar':'Ver detalle'}</i></button><div class="body" ${open?'':'hidden'}>${inner}</div>`;
+ $('#tg').onclick=()=>{open=!open;render()};
+ const c=$('#clr');if(c)c.onclick=()=>{found=null;arrow.visible=false;render()};
+}
+function select(id,tool=null){
+ cur=id;found=tool;open=true;flyTo(id);mark(id);
+ if(tool){const p=pos(id),dr=!!DOOR[id];arrow.visible=true;arrowBase=dr?1.95:p.y+0.3;arrow.position.set(p.x,arrowBase,dr?p.z:0.32);pulseUntil=performance.now()+2000}else arrow.visible=false;
+ render();
+}
+const ad=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[øØ]/g,'o').trim();
+const td=s=>s.toLowerCase().replace(/[øØ]/g,'').replace(/°/g,'').trim();
+function search(v){
+ v=v.trim();if(!v)return[];const l=v.toLowerCase(),a=ad(v),n=td(v);
+ return TOOLS.filter(t=>[t.title,t.tag,t.loc].some(s=>{const b=s.toLowerCase();return b.includes(l)||ad(s).includes(a)||td(s).includes(n)})).slice(0,8);
+}
+function showResults(){
+ const r=search(q.value);res.hidden=!q.value.trim();if(res.hidden)return;
+ res.innerHTML=r.length?r.map((t,i)=>`<li><button data-i="${i}"><b>${esc(t.title)}</b> <span>${esc(t.loc)}. Etiqueta: ${esc(t.tag)}</span></button></li>`).join('')
+  :'<li class="none">No hay resultados. Prueba con “Boquillas”, “WD-40” o “Paralelas”.</li>';
+ res.querySelectorAll('button').forEach(b=>b.onclick=()=>{const t=r[+b.dataset.i];q.value=t.title;res.hidden=true;q.blur();select(t.lv,t)});
+}
+q.addEventListener('input',showResults);q.addEventListener('focus',showResults);
+q.addEventListener('keydown',e=>{if(e.key==='Escape')res.hidden=true;if(e.key==='Enter'){const b=res.querySelector('button');if(b)b.click()}});
+document.addEventListener('pointerdown',e=>{if(!$('#find').contains(e.target))res.hidden=true});
+
+/* Selección tocando el armario (ignora los arrastres) */
+const ray=new THREE.Raycaster(),mp=new THREE.Vector2();let down=null;
+const hitAt=e=>{const r=canvas.getBoundingClientRect();mp.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(mp,cam);return ray.intersectObjects(pick,false)[0]};
+canvas.addEventListener('pointerdown',e=>down={x:e.clientX,y:e.clientY});
+canvas.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>6)return;const h=hitAt(e);if(h){cur=h.object.userData.lv;found=null;arrow.visible=false;mark(cur);render()}});
+canvas.addEventListener('pointermove',e=>{if(e.pointerType==='mouse')canvas.style.cursor=hitAt(e)?'pointer':'grab'});
+
+/* ---------- Bucle ---------- */
+new ResizeObserver(()=>{const w=app.clientWidth,h=app.clientHeight;cam.aspect=w/h;cam.updateProjectionMatrix();renderer.setSize(w,h,false)}).observe(app);
+const clock=new THREE.Clock();
+renderer.setAnimationLoop(()=>{
+ const t=clock.getElapsedTime();ctl.update();
+ if(arrow.visible&&!reduce){arrow.position.y=arrowBase+Math.sin(t*2.2)*0.05;arrow.rotation.y=Math.sin(t*0.9)*0.25}
+ fillM.opacity=performance.now()<pulseUntil?0.16+0.12*Math.sin(t*9):0.06;
+ renderer.render(scene,cam);
+});
+mark(cur);render();
+</script>
+</body>
+</html>
